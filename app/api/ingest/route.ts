@@ -6,7 +6,6 @@ type IngestPayload = {
   device_code: string;
   token: string;
   ts?: string;
-  nonce?: string;
   metrics: Record<string, number | string | boolean | null>;
 };
 
@@ -43,23 +42,5 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "Insert failed" }, { status: 500 });
   }
 
-  const temp = typeof body.metrics.temp_c === "number" ? body.metrics.temp_c : null;
-  const critical = temp !== null && temp >= 32;
-
-  // alert 기록(단순 룰)
-  if (temp !== null && temp >= 30) {
-    await supabaseAdmin.from("alerts").insert({
-      device_id: device.id,
-      ts,
-      severity: critical ? "critical" : "warn",
-      type: critical ? "TEMP_CRITICAL" : "TEMP_HIGH",
-      message: `temp=${temp}`,
-      reading_id: reading.id,
-    });
-  }
-
-  // Pi 출력(즉시 반응)
-  const outputs = { led: temp !== null && temp >= 30, buzzer: critical };
-
-  return NextResponse.json({ ok: true, reading_id: reading.id, outputs }, { status: 200 });
+  return NextResponse.json({ ok: true, reading_id: reading.id }, { status: 200 });
 }
